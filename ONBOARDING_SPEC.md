@@ -190,6 +190,214 @@ Bottom tab bar with 3 tabs: **Chat** | **Activity** | **Settings**
 - The chat phases are a scripted onboarding experience, not a real AI conversation
 - Everything inside the phone mockup frame
 
+---
+
+## Code Reference — Animation & Logic
+
+The prototype's full source is at `src/App.jsx` in the repo. Below are the key code blocks for animations and logic that Cursor should use as reference. **Adapt these to your app's framework/styling — don't copy inline styles.**
+
+### Orbit Keyframes
+
+```css
+@keyframes twinkle { 0%,100%{opacity:0.1} 50%{opacity:0.6} }
+@keyframes breathe { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.3} 50%{transform:translate(-50%,-50%) scale(1.1);opacity:0.7} }
+@keyframes spinCW { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes spinCCW { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+@keyframes orbitSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+@keyframes orbitCounter { from{transform:rotate(0deg)} to{transform:rotate(-360deg)} }
+@keyframes mergeIn { to{width:0;height:0;opacity:0} }
+@keyframes sparkGlow { 0%{box-shadow:0 0 0 rgba(200,130,70,0)} 50%{box-shadow:0 0 30px 15px rgba(200,130,70,0.35), 0 0 60px 30px rgba(200,120,60,0.15)} 100%{box-shadow:0 0 40px 20px rgba(200,130,70,0.25), 0 0 70px 35px rgba(200,120,60,0.08)} }
+@keyframes sparkRing { from{width:0;height:0;opacity:0.6;border-width:2px} to{width:140px;height:140px;opacity:0;border-width:1px} }
+@keyframes setupSlideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+```
+
+### Orbit Node Positioning (circular layout)
+
+```js
+// 4 nodes positioned on a circle of radius `nodeRadius`
+const nodeRadius = 130
+const setupNodes = [
+  { emoji:'🔗', label:'LinkedIn', angle:270 },  // top
+  { emoji:'✏️', label:'Name', angle:0 },         // right
+  { emoji:'🤓', label:'Avatar', angle:90 },      // bottom
+  { emoji:'💬', label:'Tone', angle:180 },        // left
+]
+
+// For each node, calculate position on the orbit ring:
+const rad = (node.angle * Math.PI) / 180
+const x = Math.cos(rad) * nodeRadius + nodeRadius
+const y = Math.sin(rad) * nodeRadius + nodeRadius
+```
+
+### Orbit Container Spin + Counter-rotation
+
+```js
+// The node container spins as a group (clockwise, 25s normal, 3s when fast)
+// Each individual node counter-rotates so emoji stays upright
+
+// Container:
+animation: spinFast ? 'orbitSpin 3s linear infinite' : 'orbitSpin 25s linear infinite'
+
+// Each node inside:
+animation: spinFast ? 'orbitCounter 3s linear infinite' : 'orbitCounter 25s linear infinite'
+```
+
+### Node Merge Animation (converge to center)
+
+```js
+// When merging, each node transitions to the center point with staggered delay
+// `merging` state = true triggers this
+
+// Each node's style when merging:
+left: merging ? centerX : x - 24,
+top: merging ? centerY : y - 24,
+opacity: merging ? 0 : 1,
+transition: merging
+  ? `left 0.6s cubic-bezier(0.4,0,0.2,1) ${idx*0.12}s,
+     top 0.6s cubic-bezier(0.4,0,0.2,1) ${idx*0.12}s,
+     opacity 0.4s ease ${idx*0.12}s`
+  : undefined
+```
+
+### Launch Animation Sequence (handleLaunch)
+
+```js
+const handleLaunch = () => {
+  // Phase 1: Speed up spin (0ms)
+  setSpinFast(true)
+
+  // Phase 2: Nodes converge to center one-by-one (800ms)
+  setTimeout(() => setMerging(true), 800)
+
+  // Phase 3: Warm amber glow on center ring (1600ms)
+  setTimeout(() => setSparking(true), 1600)
+
+  // Phase 4: Fade out the orbit view (2400ms)
+  setTimeout(() => setExiting(true), 2400)
+
+  // Phase 5: Show "Getting everything ready..." (3000ms)
+  setTimeout(() => setLoadingScreen(true), 3000)
+
+  // Phase 6: Fade loading and transition to chat (5400ms → 6000ms)
+  setTimeout(() => setLoadingFade(true), 5400)
+  setTimeout(() => onComplete(selectedAvatar, displayName), 6000)
+}
+```
+
+### Gating Logic
+
+```js
+// LinkedIn (index 0) must be completed first
+const handleNodeTap = (idx) => {
+  if (idx !== 0 && !completedSteps.has(0)) return  // locked
+  setActiveStep(idx)
+  setOpenPanel(idx)
+}
+
+// Visual: locked nodes have opacity 0.15, inactive 0.25, active 1.0
+// Completed nodes get green border + green checkmark badge
+```
+
+### Twinkling Stars (background)
+
+```js
+// Generate 50 random stars with varied size, speed, delay
+const stars = Array.from({length: 50}, () => ({
+  left: Math.random() * 100,   // % position
+  top: Math.random() * 100,
+  size: 1.5 + Math.random() * 0.5,  // px
+  duration: 2 + Math.random() * 2.8, // seconds
+  delay: Math.random() * 3,
+}))
+// Each star uses: animation: twinkle ${duration}s ease-in-out ${delay}s infinite
+```
+
+### Swipe Card (Phase 4 — email approval demo)
+
+```js
+// Drag detection with direction lock (horizontal vs vertical)
+// Touch handlers with threshold of 40px to trigger action
+
+const onTouchStart = (e) => {
+  sx = e.touches[0].clientX; sy = e.touches[0].clientY
+  locked = null; dragging = false
+}
+const onTouchMove = (e) => {
+  const dx = touch.clientX - sx
+  const dy = touch.clientY - sy
+  // Lock direction on first significant move
+  if (locked === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8)) {
+    locked = Math.abs(dx) > Math.abs(dy) ? 'h' : 'v'
+  }
+  if (locked === 'h') {
+    e.preventDefault()  // prevent scroll
+    setCardDragX(dx)
+  }
+}
+const onTouchEnd = () => {
+  if (dx > 40) handleCardAction('approve')
+  else if (dx < -40) handleCardAction('skip')
+  else setCardDragX(0)  // snap back
+}
+
+// Card transform follows drag:
+transform: `translateX(${cardDragX}px) rotate(${cardDragX * 0.05}deg)`
+transition: dragging ? 'none' : 'transform 0.3s ease'
+```
+
+### Auto-demo Animation (swipe hint)
+
+```css
+@keyframes cardDemo {
+  0% { transform:translateX(0) rotate(0deg) }
+  20% { transform:translateX(60px) rotate(3deg) }
+  40% { transform:translateX(60px) rotate(3deg) }
+  55% { transform:translateX(0) rotate(0deg) }
+  65% { transform:translateX(-60px) rotate(-3deg) }
+  80% { transform:translateX(-60px) rotate(-3deg) }
+  100% { transform:translateX(0) rotate(0deg) }
+}
+@keyframes fingerDemo {
+  0% { opacity:0; transform:translate(0,0) }
+  10% { opacity:1; transform:translate(0,0) }
+  20% { opacity:1; transform:translateX(60px) }
+  40% { opacity:1; transform:translateX(60px) }
+  55% { opacity:1; transform:translateX(0) }
+  65% { opacity:1; transform:translateX(-60px) }
+  80% { opacity:1; transform:translateX(-60px) }
+  90% { opacity:1; transform:translateX(0) }
+  100% { opacity:0; transform:translateX(0) }
+}
+```
+
+### Lock Screen Notification (Phase 7)
+
+```css
+@keyframes lockNotifIn {
+  0% { transform:translateY(10px); opacity:0 }
+  100% { transform:translateY(0); opacity:1 }
+}
+/* Usage: animation: lockNotifIn 0.6s ease-out 1.5s both */
+```
+
+### Chat Phase State Machine
+
+```js
+// Phases 1-8, driven by `phase` state
+// Each phase transition queues messages with typing indicators
+// Message types: 'ai', 'user', 'system', 'approved', 'lockscreen', 'checklist'
+// 'typing' messages show bouncing dots, 'wait' pauses for user interaction
+// waitingForUser state controls when interactive elements (chips, buttons) appear
+
+const queueMessages = (msgs) => {
+  // Process one at a time:
+  // - 'typing': show dots for duration, then remove
+  // - 'wait': set waitingForUser=true, stop processing
+  // - anything else: add to messages array, continue after 300ms
+}
+```
+
 ## Reference
 - Working prototype: https://github.com/irislawtrades/maestro-app
+- Full source: `src/App.jsx` (single file, ~1900 lines)
 - Run locally: `npm install && npm run dev`

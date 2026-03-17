@@ -1,5 +1,7 @@
 # Onboarding Flow Spec — Replace LinkedIn Screens with Orbit
 
+> ⚠️ **IMPORTANT: This is a UX/behavior spec only. Do NOT replace the app's existing UI, design system, components, or styling. Keep all existing visual design — colors, typography, spacing, component library, etc. Only implement the new flow logic, screens, and interactions described below using the app's current design language.**
+
 ## Overview
 Replace the current LinkedIn onboarding flow (LinkedIn URL input → "Doing my homework" loading → Profile confirmation card) with a new **Orbit setup screen**. The orbit is a single screen where 4 setup steps orbit a central avatar. After all steps complete, it launches into the chat.
 

@@ -32,7 +32,7 @@ function SplashScreen({ onGetStarted, onSkip }) {
     <div style={{ flex:1, overflow:'hidden' }}>
       <div style={{ height:'100%', background:'rgb(245,235,228)', display:'flex', flexDirection:'column', overflow:'hidden' }}>
         <div style={{ flex:'0 0 44%', display:'flex', alignItems:'center', justifyContent:'center', overflow:'hidden', paddingTop:50 }}>
-          <img src="/illus-splash.jpg" alt="" style={{ height:'70%', width:'70%', objectFit:'contain', mixBlendMode:'multiply' }} />
+          <video src="/splash.webm" autoPlay loop muted playsInline style={{ height:'80%', width:'80%', objectFit:'contain' }} />
         </div>
         <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'24px 24px 40px' }}>
           <div style={{ fontSize:13, color:'rgb(138,122,106)', textAlign:'center', marginBottom:4, fontWeight:400 }}>Your first AI employee</div>
@@ -321,6 +321,7 @@ function SetupScreen({ onComplete }) {
   const [showPhotoUpload, setShowPhotoUpload] = useState(false)
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const [selectedTone, setSelectedTone] = useState('Direct & concise')
+  const [eyeTarget, setEyeTarget] = useState(null) // {x, y} direction for mascot eyes
 
   const completedCount = completedSteps.size
   const displayName = customName || selectedName
@@ -346,6 +347,10 @@ function SetupScreen({ onComplete }) {
     if (idx !== 0 && !completedSteps.has(0)) return
     setActiveStep(idx)
     setOpenPanel(idx)
+    // Set eye direction based on node angle
+    const node = setupNodes[idx]
+    const rad = (node.angle * Math.PI) / 180
+    setEyeTarget({ x: Math.cos(rad) * 3, y: Math.sin(rad) * 3 })
   }
 
   const closePanel = () => setOpenPanel(null)
@@ -399,20 +404,24 @@ function SetupScreen({ onComplete }) {
           {/* Center */}
           <div style={{ position:'absolute', left:'50%', top:'50%', transform:'translate(-50%,-50%)', display:'flex', flexDirection:'column', alignItems:'center', zIndex:3 }}>
             <div style={{
-              width:70, height:70, borderRadius:'50%',
-              background:'rgba(255,255,255,0.06)', backdropFilter:'blur(8px)',
+              width:100, height:100, borderRadius:'50%',
+              background: selectedAvatar === '👑' ? 'rgb(245,235,228)' : '#000000', overflow:'hidden',
               display:'flex', alignItems:'center', justifyContent:'center',
-              fontSize:30, position:'relative',
+              position:'relative',
               animation: sparking ? 'sparkGlow 0.8s ease-out forwards' : 'none',
             }}>
-              {/* Breathing ring - centered on this circle */}
+              {/* Breathing ring */}
               <div style={{
-                position:'absolute', width:90, height:90, borderRadius:'50%',
+                position:'absolute', width:100, height:100, borderRadius:'50%',
                 border:'1.5px solid rgba(255,255,255,0.05)',
                 animation:'breathe 3s ease-in-out infinite',
                 top:'50%', left:'50%',
               }} />
-              {selectedAvatar}
+              {selectedAvatar === '👑' ? (
+                <img src="/mascot-peek.jpg" alt="" style={{ width:'100%', objectFit:'contain', position:'relative', zIndex:1, marginTop:-15 }} />
+              ) : (
+                <span style={{ fontSize:48, position:'relative', zIndex:1 }}>{selectedAvatar}</span>
+              )}
               {sparking && <div style={{
                 position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)',
                 borderRadius:'50%', border:'2px solid rgba(200,90,58,0.6)',

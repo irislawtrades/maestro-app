@@ -1,4 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
+import Lottie from 'lottie-react'
+import lottiehands from '../public/illus-hands.json'
+import lottieblocks from '../public/illus-blocks.json'
+import lottiewand from '../public/illus-wand.json'
+const lottieMap = { '/illus-hands.png': lottiehands, '/illus-blocks.png': lottieblocks, '/illus-wand.png': lottiewand }
 
 function PhoneFrame({ children }) {
   return (
@@ -81,7 +86,7 @@ function OnboardingScreen({ onSignUp, onLogIn }) {
           onMouseUp={e => { if(startX.current!==null){ swipe(startX.current - e.clientX); startX.current=null } }}
         >
           <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center' }}>
-            <img key={s.image} src={s.image} alt="" draggable={false} style={{ height:'90%', width:'90%', objectFit:'contain', mixBlendMode:'multiply', animation:'fadeIn 0.3s ease' }} />
+            <Lottie key={s.image} animationData={lottieMap[s.image]} loop={true} style={{ height:'90%', width:'90%', objectFit:'contain' }} />
           </div>
         </div>
         <div style={{ flex:1, display:'flex', flexDirection:'column', padding:'28px 28px 32px' }}>

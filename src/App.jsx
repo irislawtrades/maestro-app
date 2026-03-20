@@ -618,6 +618,11 @@ function SetupScreen({ onComplete }) {
             {/* Step 2: Name */}
             {openPanel === 1 && (
               <div>
+                <input
+                  value={customName} onChange={e => setCustomName(e.target.value)}
+                  placeholder="Or type your own..."
+                  style={{ width:'100%', height:48, borderRadius:14, border:'none', background:'rgba(255,255,255,0.06)', color:'#fff', fontSize:15, padding:'0 16px', fontFamily:'inherit', boxSizing:'border-box', outline:'none', marginBottom:12 }}
+                />
                 <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:12 }}>
                   {nameOptions.map(n => (
                     <div key={n} onClick={() => { setSelectedName(n); setCustomName('') }} style={{
@@ -628,18 +633,12 @@ function SetupScreen({ onComplete }) {
                     }}>{n}</div>
                   ))}
                 </div>
-                <input
-                  value={customName} onChange={e => setCustomName(e.target.value)}
-                  placeholder="Or type your own..."
-                  style={{ width:'100%', height:48, borderRadius:14, border:'none', background:'rgba(255,255,255,0.06)', color:'#fff', fontSize:15, padding:'0 16px', fontFamily:'inherit', boxSizing:'border-box', outline:'none', marginBottom:12 }}
-                />
                 <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)', marginBottom:6 }}>Your timezone</div>
                 <div style={{ position:'relative' }}>
                   <select
-                    defaultValue="America/New_York"
+                    defaultValue={Intl.DateTimeFormat().resolvedOptions().timeZone}
                     style={{ width:'100%', height:48, borderRadius:14, border:'none', background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.7)', fontSize:14, padding:'0 16px', fontFamily:'inherit', boxSizing:'border-box', appearance:'none', WebkitAppearance:'none', cursor:'pointer', outline:'none' }}
                   >
-                    <option value="ET">Auto-detect (ET — Eastern)</option>
                     <option value="CT">CT — Central</option>
                     <option value="MT">MT — Mountain</option>
                     <option value="PT">PT — Pacific</option>
